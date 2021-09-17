@@ -63,8 +63,7 @@ Vagrant.configure("2") do |config|
   # Puppet, Chef, Ansible, Salt, and Docker are also available. Please see the
   # documentation for more information about their specific syntax and use.
   script = <<-SHELL
-   rsync -av /vagrant/kconfigreader /home/vagrant --exclude /vagrant/kconfigreader/kconfigreader/.git
-   cd /home/vagrant/kconfigreader
+   cd /vagrant
    source setup.sh
   SHELL
   config.vm.provision "shell", inline: script, privileged: false
