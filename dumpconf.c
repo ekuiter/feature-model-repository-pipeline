@@ -85,8 +85,19 @@ char* getPropType(enum prop_type t) {
 	return "?";
 }
 
+char* replace_char(char* str, char find, char replace){
+	if (str == NULL)
+		return NULL;
+    char *current_pos = strchr(str,find);
+    while (current_pos) {
+        *current_pos = replace;
+        current_pos = strchr(current_pos,find);
+    }
+    return str;
+}
 
 void dumpsymref(FILE *out, struct symbol *s) {
+	replace_char(s->name, '&', '_'); // necessary to parse freetz-ng, which uses & characters in feature names
 	if (s==&symbol_mod) 
 		fprintf(out, "m");
 	else if (s==&symbol_yes) 

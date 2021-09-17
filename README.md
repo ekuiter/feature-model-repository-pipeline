@@ -27,7 +27,8 @@ The results are stored into the `models/` directory, resulting in (description t
 *.dimacs    Text file that contains CNF constraints, which represent the original KConfig model. Created by KConfigReader by using Tseitin transformation.
  ```
 
-*On the "Releases" page, you can download the feature models read by eval.sh.*
+**On the "Releases" page, you can download the feature models read by eval.sh.**
+
 This is comparable to the models found at https://github.com/PettTo/Feature-Model-History-of-Linux, only that we had a different selection of projects and commits.
 We also made some changes to dumpconf (the tool used to produce the input RSF file for kconfigreader), to allow for reading feature models for other projects and versions.
 Specifically, we added support for E_CHOICE (treated as E_LIST), P_IMPLY (treated as P_SELECT), E_NONE, E_LTH, E_LEQ, E_GTH, E_GEQ (ignored).
