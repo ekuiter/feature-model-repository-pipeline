@@ -18,7 +18,7 @@ dumpconf() (
     fi
     set -e
     mkdir -p /vagrant/dumpconf/$1
-    yes | make allyesconfig >/dev/null || true
+    yes | make allyesconfig >/dev/null || make menuconfig >/dev/null || make xconfig >/dev/null || make $dumpconf_files >/dev/null || true
     args=""
     dumpconf_files=$(echo $3 | tr , ' ')
     dumpconf_dir=$(dirname $dumpconf_files | head -n1)
@@ -91,19 +91,38 @@ svn-run() (
 #     fi
 # done
 
-#git-clone busybox https://github.com/mirror/busybox
+# for tag in $(cd axtls; svn ls ^/tags); do
+#     svn-run axtls svn://svn.code.sf.net/p/axtls/code/tags/$(echo $tag | tr / ' ') $(echo $tag | tr / ' ') config/scripts/config config/Config.in $TAGS
+# done
+
+# git-clone buildroot https://github.com/buildroot/buildroot
+# git-run linux v4.17 scripts/kconfig/zconf.tab.o arch/x86/Kconfig $TAGS
+# for tag in $(git -C buildroot tag | grep -v rc | grep -v -e '\..*\.'); do
+#     git-run buildroot $tag /vagrant/dumpconf/linux/v4.17 Config.in $TAGS
+# done
+
+# git-clone busybox https://github.com/mirror/busybox
 # for tag in $(git -C busybox tag | grep -v pre | grep -v alpha | grep -v rc); do
 #     git-run busybox $tag scripts/kconfig/zconf.tab.o Config.in $TAGS
 # done
 
-# for tag in $(cd axtls; svn ls ^/tags); do
-#     svn-run axtls svn://svn.code.sf.net/p/axtls/code/tags/$(echo $tag | tr / ' ') $(echo $tag | tr / ' ') config/scripts/config config/Config.in $TAGS
+# https://github.com/coreboot/coreboot uses a modified Kconfig with wildcards for the source directive
+
+# git-clone embtoolkit https://github.com/ndmsystems/embtoolkit
+# for tag in $(git -C embtoolkit tag | grep -v rc | grep -v -e '-.*-'); do
+#     git-run embtoolkit $tag scripts/kconfig/zconf.tab.o Kconfig $TAGS
 # done
 
 # git-clone fiasco https://github.com/kernkonzept/fiasco
 # as a workaround, use dumpconf from Linux, because it cannot be built in this repository
 # git-run linux v5.0 scripts/kconfig/confdata.o,scripts/kconfig/expr.o,scripts/kconfig/preprocess.o,scripts/kconfig/symbol.o,scripts/kconfig/zconf.lex.o,scripts/kconfig/zconf.tab.o arch/x86/Kconfig $TAGS
 # git-run fiasco d393c79a5f67bb5466fa69b061ede0f81b6398db /vagrant/dumpconf/linux/v5.0 src/Kconfig $TAGS
+
+# https://github.com/Freetz/freetz uses Kconfig, but cannot be parsed with dumpconf, so we use freetz-ng instead (which is newer anyway)
+
+# git-clone freetz-ng https://github.com/Freetz-NG/freetz-ng
+# git-run linux v5.0 scripts/kconfig/confdata.o,scripts/kconfig/expr.o,scripts/kconfig/preprocess.o,scripts/kconfig/symbol.o,scripts/kconfig/zconf.lex.o,scripts/kconfig/zconf.tab.o arch/x86/Kconfig $TAGS
+# git-run freetz-ng 88b972a6283bfd65ae1bbf559e53caf7bb661ae3 /vagrant/dumpconf/linux/v5.0 config/Config.in "rsf|features|model|kconfigreader"
 
 # git-clone toybox https://github.com/landley/toybox
 # as a workaround, use dumpconf from Linux, because it cannot be built in this repository
@@ -117,16 +136,7 @@ svn-run() (
 #     git-run uclibc-ng $tag extra/config/zconf.tab.o extra/Configs/Config.in $TAGS
 # done
 
+git-clone uclinux https://github.com/rhuitl/uClinux
+git-run uclinux master config/kconfig/zconf.tab.o config/Kconfig $TAGS
+
 # https://github.com/zephyrproject-rtos/zephyr also uses Kconfig, but a modified dialect based on Kconfiglib, which is not compatible with kconfigreader
-
-# https://github.com/Freetz/freetz uses Kconfig, but cannot be parsed with dumpconf, so we use freetz-ng instead (which is newer anyway)
-
-# git-clone freetz-ng https://github.com/Freetz-NG/freetz-ng
-# git-run linux v5.0 scripts/kconfig/confdata.o,scripts/kconfig/expr.o,scripts/kconfig/preprocess.o,scripts/kconfig/symbol.o,scripts/kconfig/zconf.lex.o,scripts/kconfig/zconf.tab.o arch/x86/Kconfig $TAGS
-# git-run freetz-ng 88b972a6283bfd65ae1bbf559e53caf7bb661ae3 /vagrant/dumpconf/linux/v5.0 config/Config.in "rsf|features|model|kconfigreader"
-
-git-clone buildroot https://github.com/buildroot/buildroot
-git-run linux v4.17 scripts/kconfig/zconf.tab.o arch/x86/Kconfig $TAGS
-for tag in $(git -C buildroot tag | grep -v rc | grep -v -e '\..*\.'); do
-    git-run buildroot $tag /vagrant/dumpconf/linux/v4.17 Config.in $TAGS
-done
