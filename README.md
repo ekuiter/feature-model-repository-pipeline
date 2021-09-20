@@ -3,6 +3,7 @@
 This repository provides feature models for several open-source projects based on the Kconfig language for variability modeling.
 The feature models are created with [kconfigreader](https://github.com/ckaestne/kconfigreader), a tool for reading Kconfig files and converting them into feature model formulas for further reasoning.
 For improved reproducibility, kconfigreader is set up and run in a virtual machine running Ubuntu 14.04 (for newer versions there are incompabilities between Java and the required Scala version).
+Besides creating a public repository with large feature models, the idea of this project is also that you can change the scripts according to your own needs (e.g., projects/versions/commits) and automate most of the steps needed to set up and run kconfigreader.
 
 ## Getting Started
 
