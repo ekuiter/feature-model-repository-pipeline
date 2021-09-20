@@ -1,19 +1,18 @@
-# kconfigreader VM
+# Feature Model Repository
 
-This repository provides a virtual machine running [kconfigreader](https://github.com/ckaestne/kconfigreader), a tool for reading Kconfig files and converting them into formulas for further reasoning.
+This repository provides a virtual machine running [kconfigreader](https://github.com/ckaestne/kconfigreader), a tool for reading Kconfig files and converting them into feature model formulas for further reasoning.
 
 ## Getting Started
 
 Clone recursively:
 
 ```
-git clone --recurse-submodules git@github.com:ekuiter/kconfigreader-vm.git
+git clone --recurse-submodules git@github.com:ekuiter/feature-model-repository.git
 ```
 
 Install [Vagrant](https://www.vagrantup.com/).
 
-Run `vagrant up` inside this repository. This will also prompt you to install the
-`ubuntu/trusty64` box, the base system for the VM.
+Run `vagrant up` inside this repository. This will also prompt you to install the `hashicorp/bionic64` box, the base system for the VM.
 
 After `vagrant up`, use `vagrant ssh` to log on.
 
