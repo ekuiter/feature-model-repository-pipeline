@@ -6,16 +6,16 @@ For improved reproducibility, kconfigreader is set up and run in a virtual machi
 
 ## Getting Started
 
-Clone recursively:
+First, clone this repository:
 
 ```
-git clone --recurse-submodules git@github.com:ekuiter/feature-model-repository.git
+git clone https://github.com/ekuiter/feature-model-repository.git
 ```
 
 Install [Vagrant](https://www.vagrantup.com/) and [VirtualBox](https://www.virtualbox.org/), then run `vagrant up` inside this repository. This will also prompt you to install the base system for the VM.
 After `vagrant up`, use `vagrant ssh` to log on to the VM.
 In case that `vagrant up` fails with `error retrieving required libraries` for Scala, this can be fixed by re-running the setup script with `vagrant ssh` and `source /vagrant/setup.sh`.
-In case that this fails due to line endings (which can happen with Git on Windows), you can fix the line endings and re-run the setup script with `vagrant ssh` and `sudo apt-get update && sudo apt-get install dos2unix && find /vagrant -type f -exec dos2unix {} \; && /vagrant/setup.sh`.
+In case that this fails due to line endings (which can happen with Git on Windows), fix the line endings and re-run the setup script with `vagrant ssh` and `sudo apt-get update && sudo apt-get install dos2unix && find /vagrant -type f -exec dos2unix {} \; && /vagrant/setup.sh`.
 
 With `chmod +x /vagrant/eval.sh && /vagrant/eval.sh`, you can read feature models for several versions of Linux and other Kconfig-based projects.
 The results are stored into the `models/` directory, resulting in (description taken from https://github.com/PettTo/Feature-Model-History-of-Linux):

@@ -1,3 +1,0 @@
-[submodule "kconfigreader/kconfigreader"]
-	path = kconfigreader
-	url = https://github.com/ckaestne/kconfigreader

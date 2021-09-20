@@ -1,4 +1,5 @@
 .vagrant
+kconfigreader
 dumpconf
 models
 .vscode
