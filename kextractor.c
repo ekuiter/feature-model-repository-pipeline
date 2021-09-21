@@ -605,7 +605,6 @@ void print_usage(void)
   printf("%s [options] --ACTION Kconfig\n", progname);
   printf("\n");
   printf("OPTIONS\n");
-  printf("-C, --Configure\tparse config.in files instead of Kconfig\n");
   printf("-d, --default-env\tuse x86 environment variables\n");
   printf("                 \tSRCARCH=x86 ARCH=x86_64 KERNELVERSION=kcu\n");
   printf("-e, --put-env VAR=VAL\tadd variable settings to environment");
@@ -678,7 +677,7 @@ int main(int argc, char **argv)
 
     int option_index = 0;
 
-    opt = getopt_long(argc, argv, "CpP:Dde:o:hf:a:v", long_options, &option_index);
+    opt = getopt_long(argc, argv, "pP:Dde:o:hf:a:v", long_options, &option_index);
 
     if (-1 == opt)
       break;
@@ -738,10 +737,6 @@ int main(int argc, char **argv)
       break;
     case 'D':
       enable_reverse_dependencies = false;
-      break;
-    case 'C':
-      fprintf(stderr, "bconf not supported in this version of kextract\n", optarg);
-      exit(1);
       break;
     case 'd':
       default_env = true;

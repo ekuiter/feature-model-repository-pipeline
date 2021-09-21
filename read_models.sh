@@ -1,11 +1,17 @@
 #!/bin/bash
+READER=$1
+if [ $READER = kconfigreader ]; then
+    BINDING=dumpconf
+    TAGS="rsf|dimacs|features|model|kconfigreader|tseytin"
+elif [ $READER = kmax ]; then
+    BINDING=kextractor
+    TAGS="kclause|kmax"
+fi
+BINDING_ENUMS=(S_UNKNOWN S_BOOLEAN S_TRISTATE S_INT S_HEX S_STRING S_OTHER P_UNKNOWN P_PROMPT P_COMMENT P_MENU P_DEFAULT P_CHOICE P_SELECT P_RANGE P_ENV P_SYMBOL E_SYMBOL E_NOT E_EQUAL E_UNEQUAL E_OR E_AND E_LIST E_RANGE E_CHOICE P_IMPLY E_NONE E_LTH E_LEQ E_GTH E_GEQ dir_dep)
+
 cd
 mkdir -p /vagrant/data
-rm -f /vagrant/data/log.txt
-
-BINDING_ENUMS=(S_UNKNOWN S_BOOLEAN S_TRISTATE S_INT S_HEX S_STRING S_OTHER P_UNKNOWN P_PROMPT P_COMMENT P_MENU P_DEFAULT P_CHOICE P_SELECT P_RANGE P_ENV P_SYMBOL E_SYMBOL E_NOT E_EQUAL E_UNEQUAL E_OR E_AND E_LIST E_RANGE E_CHOICE P_IMPLY E_NONE E_LTH E_LEQ E_GTH E_GEQ dir_dep)
-TAGS_KCONFIGREADER="rsf|dimacs|features|model|kconfigreader|tseytin"
-TAGS_KMAX="kclause|kmax"
+rm -f /vagrant/data/log_$READER.txt
 
 git-clone() {
     if [[ ! -d "$1" ]]; then
@@ -42,48 +48,60 @@ c-binding() (
     fi
 )
 
-kconfigreader() (
+read-model() (
+    # read-model kconfigreader|kmax system commit c-binding Kconfig tags env
     set -e
-    mkdir -p /vagrant/data/models/$1
+    mkdir -p /vagrant/data/models/$2
     writeDimacs=--writeDimacs
-    if [ $1 = freetz-ng ]; then
+    env="$(echo '' -e $7 | sed 's/,/ -e /g')"
+    if [ $2 = freetz-ng ]; then
         touch make/Config.in.generated make/external.in.generated config/custom.in # ugly hack because freetz-ng is weird
         writeDimacs="" # Tseytin transformation crashes for freetz-ng
     fi
-    /vagrant/kconfigreader/run.sh de.fosd.typechef.kconfig.KConfigReader --fast --dumpconf $3 $writeDimacs $4 /vagrant/data/models/$1/$2
-    echo $1,$2,$3,$4,$5 >> /vagrant/data/models.txt
+    if [ $2 = linux ]; then
+        # ignore all constraints that use the newer $(success,...) syntax
+        find ./ -type f -name "*Kconfig*" -exec sed -i 's/\s*default $(.*//g' {} \;
+        find ./ -type f -name "*Kconfig*" -exec sed -i 's/\s*depends on $(.*//g' {} \;
+        find ./ -type f -name "*Kconfig*" -exec sed -i 's/\s*def_bool $(.*//g' {} \;
+    fi
+    if [ $1 = kconfigreader ]; then
+        /vagrant/kconfigreader/run.sh de.fosd.typechef.kconfig.KConfigReader --fast --dumpconf $4 $writeDimacs $5 /vagrant/data/models/$2/$3.$1
+    elif [ $1 = kmax ]; then
+        eval $4 --extract -o /vagrant/data/models/$2/$3.$1.kclause $env $5
+    fi
+    echo $2,$3,$4,$5,$6 >> /vagrant/data/models.txt
 )
 
 git-run() (
     set -e
-    echo >> /vagrant/data/log.txt
+    echo >> /vagrant/data/log_$READER.txt
     if [[ ! -f "/vagrant/data/models/$1/$2.model" ]]; then
-        echo -n "Reading feature model for $1 at tag $2 ..." >> /vagrant/data/log.txt
+        echo -n "Reading feature model for $1 at tag $2 ..." >> /vagrant/data/log_$READER.txt
         cd $1
         git reset --hard
         git clean -fx >/dev/null
         git checkout -f $2
-        kconfigreader $1 $2 $(c-binding dumpconf $1 $2 $3) $4 $5
+        read-model $READER $1 $2 $(c-binding $BINDING $1 $2 $3) $4 $5 $6
         cd
-        echo -n " done." >> /vagrant/data/log.txt
+        echo -n " done." >> /vagrant/data/log_$READER.txt
     else
-        echo -n "Skipping feature model for $1 at tag $2" >> /vagrant/data/log.txt
+        echo -n "Skipping feature model for $1 at tag $2" >> /vagrant/data/log_$READER.txt
     fi
 )
 
 svn-run() (
     set -e
-    echo >> /vagrant/data/log.txt
+    echo >> /vagrant/data/log_$READER.txt
     if [[ ! -f "/vagrant/data/models/$1/$3.model" ]]; then
-        echo -n "Reading feature model for $1 at tag $3 ..." >> /vagrant/data/log.txt
+        echo -n "Reading feature model for $1 at tag $3 ..." >> /vagrant/data/log_$READER.txt
         rm -rf $1
         svn checkout $2 $1
         cd $1
         kconfigreader $1 $3 $(dumpconf $1 $3 $4) $5 $6
         cd
-        echo -n " done." >> /vagrant/data/log.txt
+        echo -n " done." >> /vagrant/data/log_$READER.txt
     else
-        echo -n "Skipping feature model for $1 at tag $3" >> /vagrant/data/log.txt
+        echo -n "Skipping feature model for $1 at tag $3" >> /vagrant/data/log_$READER.txt
     fi
 )
 
@@ -104,15 +122,15 @@ svn-run() (
 # done
 
 git-clone linux https://github.com/torvalds/linux
-#git-run linux v5.0 scripts/kconfig/*.o arch/x86/Kconfig $TAGS
-cd ~/linux
+git-run linux v4.0 scripts/kconfig/*.o arch/x86/Kconfig $TAGS "ARCH=x86,SRCARCH=x86,KERNELVERSION=kcu,srctree=./,CC=cc,LD=ld,RUSTC=rustc"
+# cd ~/linux
 
-for tag in $(git tag | grep -v rc | grep -v tree); do
-    git reset --hard
-    git clean -fx
-    git checkout -f $tag
-    c-binding kextractor linux $tag scripts/kconfig/*.o
-done
+# for tag in $(git tag | grep -v rc | grep -v tree); do
+#     git reset --hard
+#     git clean -fx
+#     git checkout -f $tag
+#     c-binding kextractor linux $tag scripts/kconfig/*.o
+#done
 
 # # axTLS
 # for tag in $(cd axtls; svn ls ^/tags); do
