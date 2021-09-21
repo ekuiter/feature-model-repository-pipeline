@@ -2,10 +2,10 @@
 READER=$1
 if [ $READER = kconfigreader ]; then
     BINDING=dumpconf
-    TAGS="rsf|dimacs|features|model|kconfigreader|tseytin"
+    TAGS="kconfigreader|rsf|features|model|dimacs|cnf|tseytin"
 elif [ $READER = kmax ]; then
     BINDING=kextractor
-    TAGS="kclause|kmax"
+    TAGS="kmax|kclause|features|model|dimacs|cnf|tseytin"
 fi
 BINDING_ENUMS=(S_UNKNOWN S_BOOLEAN S_TRISTATE S_INT S_HEX S_STRING S_OTHER P_UNKNOWN P_PROMPT P_COMMENT P_MENU P_DEFAULT P_CHOICE P_SELECT P_RANGE P_ENV P_SYMBOL E_SYMBOL E_NOT E_EQUAL E_UNEQUAL E_OR E_AND E_LIST E_RANGE E_CHOICE P_IMPLY E_NONE E_LTH E_LEQ E_GTH E_GEQ dir_dep)
 
@@ -65,9 +65,12 @@ read-model() (
         find ./ -type f -name "*Kconfig*" -exec sed -i 's/\s*def_bool $(.*//g' {} \;
     fi
     if [ $1 = kconfigreader ]; then
-        /vagrant/kconfigreader/run.sh de.fosd.typechef.kconfig.KConfigReader --fast --dumpconf $4 $writeDimacs $5 /vagrant/data/models/$2/$3.$1
+        ~/kconfigreader/run.sh de.fosd.typechef.kconfig.KConfigReader --fast --dumpconf $4 $writeDimacs $5 /vagrant/data/models/$2/$3.$1
     elif [ $1 = kmax ]; then
         eval $4 --extract -o /vagrant/data/models/$2/$3.$1.kclause $env $5
+        eval $4 --configs $env $5 > /vagrant/data/models/$2/$3.$1.features
+        kclause < /vagrant/data/models/$2/$3.$1.kclause > /vagrant/data/models/$2/$3.$1.model
+        python3 /vagrant/kclause2dimacs.py /vagrant/data/models/$2/$3.$1.model > /vagrant/data/models/$2/$3.$1.dimacs
     fi
     echo $2,$3,$4,$5,$6 >> /vagrant/data/models.txt
 )
@@ -75,7 +78,7 @@ read-model() (
 git-run() (
     set -e
     echo >> /vagrant/data/log_$READER.txt
-    if [[ ! -f "/vagrant/data/models/$1/$2.model" ]]; then
+    if [[ ! -f "/vagrant/data/models/$1/$2.model" ]]; then # todo for kmax
         echo -n "Reading feature model for $1 at tag $2 ..." >> /vagrant/data/log_$READER.txt
         cd $1
         git reset --hard
@@ -111,26 +114,18 @@ svn-run() (
 # Sometimes this is not possible, then we use dumpconf compiled for a Linux version with a similar Kconfig dialect (in most projects, the Kconfig parser is cloned&owned from Linux).
 # You can also read feature models for any other tags/commits (e.g., for every commit that changes a Kconfig file), although usually very old versions won't work (because Kconfig might have only been introduced later) and very recent versions might also not work (because they use new/esoteric Kconfig features not supported by kconfigreader or dumpconf).
 
-# # Linux
-# git-clone linux https://github.com/torvalds/linux
-# for tag in $(git -C linux tag | grep -v rc | grep -v tree); do
-#     if git -C ~/linux ls-tree -r $tag --name-only | grep -q arch/i386; then
-#         git-run linux $tag scripts/kconfig/zconf.tab.o arch/i386/Kconfig $TAGS # in old versions, x86 is called i386
-#     else
-#         git-run linux $tag scripts/kconfig/zconf.tab.o arch/x86/Kconfig $TAGS
-#     fi
-# done
-
+# Linux
 git-clone linux https://github.com/torvalds/linux
-git-run linux v4.0 scripts/kconfig/*.o arch/x86/Kconfig $TAGS "ARCH=x86,SRCARCH=x86,KERNELVERSION=kcu,srctree=./,CC=cc,LD=ld,RUSTC=rustc"
-# cd ~/linux
+for tag in $(git -C linux tag | grep -v rc | grep -v tree); do
+    if git -C linux ls-tree -r $tag --name-only | grep -q arch/i386; then
+        git-run linux $tag scripts/kconfig/*.o arch/i386/Kconfig $TAGS # in old versions, x86 is called i386
+    else
+        git-run linux $tag scripts/kconfig/*.o arch/x86/Kconfig $TAGS "ARCH=x86,SRCARCH=x86,KERNELVERSION=kcu,srctree=./,CC=cc,LD=ld,RUSTC=rustc"
+    fi
+done
 
-# for tag in $(git tag | grep -v rc | grep -v tree); do
-#     git reset --hard
-#     git clean -fx
-#     git checkout -f $tag
-#     c-binding kextractor linux $tag scripts/kconfig/*.o
-#done
+#git-clone linux https://github.com/torvalds/linux
+#git-run linux v4.0 scripts/kconfig/*.o arch/x86/Kconfig $TAGS "ARCH=x86,SRCARCH=x86,KERNELVERSION=kcu,srctree=./,CC=cc,LD=ld,RUSTC=rustc"
 
 # # axTLS
 # for tag in $(cd axtls; svn ls ^/tags); do
