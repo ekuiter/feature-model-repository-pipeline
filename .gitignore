@@ -1,6 +1,5 @@
 .vagrant
 kconfigreader
-dumpconf
-models
+kmax
 .vscode
-log.txt
+data

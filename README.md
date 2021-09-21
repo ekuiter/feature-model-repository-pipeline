@@ -18,8 +18,8 @@ After `vagrant up`, use `vagrant ssh` to log on to the VM.
 In case that `vagrant up` fails with `error retrieving required libraries` for Scala, this can be fixed by re-running the setup script with `vagrant ssh` and `source /vagrant/setup.sh`.
 In case that this fails due to line endings (which can happen with Git on Windows), fix the line endings and re-run the setup script with `vagrant ssh` and `sudo apt-get update && sudo apt-get install dos2unix && find /vagrant -type f -exec dos2unix {} \; && /vagrant/setup.sh`.
 
-With `chmod +x /vagrant/eval.sh && /vagrant/eval.sh`, you can read feature models for several versions of Linux and other Kconfig-based projects.
-The results are stored into the `models/` directory, resulting in (description taken from https://github.com/PettTo/Feature-Model-History-of-Linux):
+With `chmod +x /vagrant/read_models.sh && /vagrant/read_models.sh`, you can read feature models for several versions of Linux and other Kconfig-based projects.
+The results are stored into the `data/models/` directory in several formats (description taken from https://github.com/PettTo/Feature-Model-History-of-Linux):
 
 ```
 *.rsf       Intermediate xml file format, created by KConfigReader (dumpconf). Contains raw dump of the original KConfig model file
@@ -32,4 +32,4 @@ The resulting models are comparable to those found at https://github.com/PettTo/
 We also made some changes to dumpconf (the tool used to produce the input RSF file for kconfigreader), to allow for reading feature models for other projects and versions.
 Specifically, we added support for E_CHOICE (treated as E_LIST), P_IMPLY (treated as P_SELECT), E_NONE, E_LTH, E_LEQ, E_GTH, E_GEQ (ignored).
 We also fixed some other bugs to allow reading feature models for other projects as well.
-All compiled dumpconf binaries are stored in the `dumpconf/` directory for later reuse.
+All compiled dumpconf binaries are stored in the `data/c-bindings/` directory for later reuse.

@@ -6,7 +6,7 @@ sudo apt-get update
 sudo apt-get install git subversion openjdk-7-jdk sbt=0.13.6 gcc g++ flex bison -y --force-yes # tested versions of Java and Scala build tool
 cd /vagrant
 mkdir -p dumpconf models
-git clone https://github.com/ckaestne/kconfigreader.git
+sudo git clone https://github.com/ckaestne/kconfigreader.git
 cd kconfigreader
 git checkout 913bf3178af5a8ac8bedc5e8733561ed38280cf9 # tested version of Kconfigreader
 sbt mkrun
