@@ -4,7 +4,6 @@ echo "deb https://repo.scala-sbt.org/scalasbt/debian all main" | sudo tee /etc/a
 echo "deb https://repo.scala-sbt.org/scalasbt/debian /" | sudo tee /etc/apt/sources.list.d/sbt_old.list
 sudo apt-get update
 sudo apt-get install git subversion openjdk-7-jdk sbt=0.13.6 gcc g++ flex bison -y --force-yes # tested versions of Java and Scala build tool
-mkdir -p /vagrant/data
 cd
 git clone https://github.com/ckaestne/kconfigreader.git || true
 cd kconfigreader

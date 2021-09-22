@@ -1,9 +1,7 @@
 #!/bin/bash
 set -e
 sudo apt-get update
-sudo apt-get install git subversion python3-setuptools python3-dev flex bison bc libssl-dev libelf-dev -y --force-yes # python3-pip
-#pip3 install z3
-mkdir -p /vagrant/data
+sudo apt-get install git subversion python3-setuptools python3-dev flex bison bc libssl-dev libelf-dev -y --force-yes
 cd
 git clone https://github.com/paulgazz/kmax.git || true
 cd kmax
