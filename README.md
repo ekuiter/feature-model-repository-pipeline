@@ -5,7 +5,7 @@ The feature models are created with [kconfigreader](https://github.com/ckaestne/
 For improved reproducibility, both tools are set up and run in virtual machines using Vagrant (kconfigreader in Ubuntu 14.04 because of incompabilities between Java and Scala in newer versions).
 Besides creating a public repository with large feature models, the idea of this project is also that you can change the scripts according to your own needs (e.g., projects/versions/commits) and automate most of the steps needed to set up and run kconfigreader and Kmax.
 
-**You can freely access and download the feature models produced by this pipeline at: https://cloud.ovgu.de/s/pkD3By6bp8cTDLr**
+**You can freely access and download all resulting feature models at: https://cloud.ovgu.de/s/pkD3By6bp8cTDLr**
 
 ## Getting Started
 
@@ -21,13 +21,17 @@ In case that `vagrant up` fails with `error retrieving required libraries` for S
 In case that this fails due to line endings (which can happen with Git on Windows), fix the line endings and re-run the setup script with `vagrant ssh kconfigreader` and `sudo apt-get update && sudo apt-get install dos2unix && find /vagrant -type f -exec dos2unix {} \; && /vagrant/setup_kconfigreader.sh`.
 
 With `source /vagrant/read_models.sh <reader>`, you can read feature models for several versions of Linux and other Kconfig-based projects (this process can be monitored in less detail with `tail -f data/log_<reader>.txt`).
-The results are stored into the `data/models/` directory in several formats (description taken from https://github.com/PettTo/Feature-Model-History-of-Linux):
+The results are stored into the `data/models/` directory in several formats:
 
 ```
-*.rsf       Intermediate xml file format, created by KConfigReader (dumpconf). Contains raw dump of the original KConfig model file
-*.features  Simple text file containing all feature names contained in the original variability model
-*.model     Text file that contains boolean constraints, which represent the original KConfig model
-*.dimacs    Text file that contains CNF constraints, which represent the original KConfig model. Created by KConfigReader by using Tseitin transformation.
+*.kconfigreader.rsf       Intermediate file created by dumpconf
+*.kconfigreader.features  Text file with all feature names
+*.kconfigreader.model     Text file with Boolean constraints (unprocessed, therefore not necessarily in CNF)
+*.kconfigreader.dimacs    Text file with Boolean constraints in Tseytin-transformed CNF (created with kconfigreader)
+*.kmax.kclause            Intermediate file created by kextractor
+*.kmax.features           Text file with all feature names
+*.kmax.model              Pickled (serialized) file with constraints (translated into smtlib2 format, not necessarily in CNF)
+*.kmax.dimacs             Text file with Boolean constraints in Tseytin-transformed CNF (created with z3)
  ```
 
 The resulting models are comparable to those found at https://github.com/PettTo/Feature-Model-History-of-Linux and https://bitbucket.org/tberger/variability-models/src/master/kconfig/, only that we have a different selection of projects and commits.
