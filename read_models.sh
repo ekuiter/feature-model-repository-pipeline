@@ -40,7 +40,7 @@ c-binding() (
     if ! echo $4 | grep -q c-bindings; then
         # make sure all dependencies for the C program are compiled
         # make config sometimes asks for integers (not easily simulated with "yes"), which is why we add a timeout
-        make $binding_files >/dev/null || (yes | make allyesconfig >/dev/null) || (yes "" | timeout 20s make config >/dev/null) || true
+        make $binding_files >/dev/null || (yes | make allyesconfig >/dev/null) || (yes | make xconfig >/dev/null) || (yes "" | timeout 20s make config >/dev/null) || true
         strip -N main $binding_dir/*.o || true
         cmd="gcc /vagrant/$1.c $binding_files -I $binding_dir -Wall -Werror=switch $args -Wno-format -o /vagrant/data/c-bindings/$2/$3.$1"
         (echo $cmd >> $LOG) && eval $cmd
@@ -108,9 +108,9 @@ run() (
     set -e
     echo | tee -a $LOG
     if [[ ! -f "/vagrant/data/models/$1/$3.$READER.model" ]]; then
-        trap 'ec=$?; (( ec != 0 )) && (echo "FAIL." | tee -a $LOG) || (echo "SUCCESS." | tee -a $LOG)' EXIT
+        trap 'ec=$?; (( ec != 0 )) && (rm -f /vagrant/data/models/'$1'/'$3'.'$READER'* && echo FAIL | tee -a $LOG) || (echo SUCCESS | tee -a $LOG)' EXIT
         echo "Checking out $3 in $1" | tee -a $LOG
-        if [[ $a == svn* ]]; then
+        if [[ $2 == svn* ]]; then
             vcs=svn-checkout
             else
             vcs=git-checkout
@@ -143,51 +143,50 @@ for tag in $(git -C linux tag | grep -v rc | grep -v tree | grep -v v2.6.11); do
         run linux https://github.com/torvalds/linux $tag scripts/kconfig/*.o arch/x86/Kconfig $TAGS $linux_env
     fi
 done
-#run linux v4.0 scripts/kconfig/*.o arch/x86/Kconfig $TAGS "ARCH=x86,SRCARCH=x86,KERNELVERSION=kcu,srctree=./,CC=cc,LD=ld,RUSTC=rustc"
 
-# # axTLS
-# svn-checkout axtls svn://svn.code.sf.net/p/axtls/code/trunk
-# for tag in $(cd axtls; svn ls ^/tags); do
-#     run axtls svn://svn.code.sf.net/p/axtls/code/tags/$(echo $tag | tr / ' ') $(echo $tag | tr / ' ') config/scripts/config config/Config.in $TAGS
-# done
+# axTLS
+svn-checkout axtls svn://svn.code.sf.net/p/axtls/code/trunk
+for tag in $(cd axtls; svn ls ^/tags); do
+    run axtls svn://svn.code.sf.net/p/axtls/code/tags/$(echo $tag | tr / ' ') $(echo $tag | tr / ' ') config/scripts/config/*.o config/Config.in $TAGS
+done
 
-# # Buildroot
-# run linux v4.17 scripts/kconfig/zconf.tab.o arch/x86/Kconfig $TAGS
-# git-checkout Buildroot https://github.com/buildroot/buildroot
-# for tag in $(git -C buildroot tag | grep -v rc | grep -v -e '\..*\.'); do
-#     run buildroot https://github.com/buildroot/buildroot $tag /vagrant/data/c-bindings/linux/v4.17.dumpconf Config.in $TAGS
-# done
+# Buildroot
+run linux https://github.com/torvalds/linux v4.17 scripts/kconfig/*.o arch/x86/Kconfig $TAGS $linux_env
+git-checkout buildroot https://github.com/buildroot/buildroot
+for tag in $(git -C buildroot tag | grep -v rc | grep -v -e '\..*\.'); do
+    run buildroot https://github.com/buildroot/buildroot $tag /vagrant/data/c-bindings/linux/v4.17.$BINDING Config.in $TAGS
+done
 
-# # BusyBox
-# git-checkout busybox https://github.com/mirror/busybox
-# for tag in $(git -C busybox tag | grep -v pre | grep -v alpha | grep -v rc); do
-#     run busybox https://github.com/mirror/busybox $tag scripts/kconfig/zconf.tab.o Config.in $TAGS
-# done
+# BusyBox
+git-checkout busybox https://github.com/mirror/busybox
+for tag in $(git -C busybox tag | grep -v pre | grep -v alpha | grep -v rc); do
+    run busybox https://github.com/mirror/busybox $tag scripts/kconfig/*.o Config.in $TAGS
+done
 
-# # https://github.com/coreboot/coreboot uses a modified Kconfig with wildcards for the source directive
+# https://github.com/coreboot/coreboot uses a modified Kconfig with wildcards for the source directive
 
-# # EmbToolkit
-# git-checkout embtoolkit https://github.com/ndmsystems/embtoolkit
-# for tag in $(git -C embtoolkit tag | grep -v rc | grep -v -e '-.*-'); do
-#     run embtoolkit https://github.com/ndmsystems/embtoolkit $tag scripts/kconfig/zconf.tab.o Kconfig $TAGS
-# done
+# EmbToolkit
+git-checkout embtoolkit https://github.com/ndmsystems/embtoolkit
+for tag in $(git -C embtoolkit tag | grep -v rc | grep -v -e '-.*-'); do
+    run embtoolkit https://github.com/ndmsystems/embtoolkit $tag scripts/kconfig/*.o Kconfig $TAGS
+done
 
 # # Fiasco
-# run linux v5.0 scripts/kconfig/*.o arch/x86/Kconfig $TAGS
-# run fiasco https://github.com/kernkonzept/fiasco d393c79a5f67bb5466fa69b061ede0f81b6398db /vagrant/data/c-bindings/linux/v5.0.dumpconf src/Kconfig $TAGS
+# run linux https://github.com/torvalds/linux v5.0 scripts/kconfig/*.o arch/x86/Kconfig $TAGS $linux_env
+# run fiasco https://github.com/kernkonzept/fiasco d393c79a5f67bb5466fa69b061ede0f81b6398db /vagrant/data/c-bindings/linux/v5.0.$BINDING src/Kconfig $TAGS
 
 # # https://github.com/Freetz/freetz uses Kconfig, but cannot be parsed with dumpconf, so we use freetz-ng instead (which is newer anyway)
 
 # # Freetz-NG
-# run linux v5.0 scripts/kconfig/*.o arch/x86/Kconfig $TAGS
-# run freetz-ng https://github.com/Freetz-NG/freetz-ng 88b972a6283bfd65ae1bbf559e53caf7bb661ae3 /vagrant/data/c-bindings/linux/v5.0.dumpconf config/Config.in "rsf|features|model|kconfigreader"
+# run linux https://github.com/torvalds/linux v5.0 scripts/kconfig/*.o arch/x86/Kconfig $TAGS $linux_env
+# run freetz-ng https://github.com/Freetz-NG/freetz-ng 88b972a6283bfd65ae1bbf559e53caf7bb661ae3 /vagrant/data/c-bindings/linux/v5.0.$BINDING config/Config.in "rsf|features|model|kconfigreader"
 
 # # Toybox
 # as a workaround, use dumpconf from Linux, because it cannot be built in this repository
-# run linux v2.6.12 scripts/kconfig/zconf.tab.o arch/x86/Kconfig $TAGS
+# run linux https://github.com/torvalds/linux v2.6.12 scripts/kconfig/*.o arch/i386/Kconfig $TAGS $linux_env
 # git-checkout toybox https://github.com/landley/toybox
 # for tag in $(git -C toybox tag); do
-#     run toybox https://github.com/landley/toybox $tag /vagrant/data/c-bindings/linux/v2.6.12.dumpconf Config.in $TAGS
+#     run toybox https://github.com/landley/toybox $tag /vagrant/data/c-bindings/linux/v2.6.12.$BINDING Config.in $TAGS
 # done
 
 # # uClibc-ng
