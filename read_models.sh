@@ -22,6 +22,7 @@ cd
 mkdir -p /vagrant/data
 echo -n > $LOG
 echo -n > $MODELS
+echo system,tag,c-binding,kconfig-file,tags >> $MODELS
 
 # compiles the C program that extracts Kconfig constraints from Kconfig files
 # for kconfigreader and kmax, this compiles dumpconf and kextractor against the Kconfig parser, respectively
