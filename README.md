@@ -7,9 +7,10 @@ Besides creating a public repository with large feature models, the idea of this
 
 **You can freely access all resulting feature models at: https://cloud.ovgu.de/s/pkD3By6bp8cTDLr**
 
-The models read for Linux >4.19 and Toybox are currently not accurate and should not be used.
+The models read for Linux >=4.19 and Toybox are currently not accurate and should not be used.
 All other models were superficially checked for plausability and satisfiability.
 Where both kconfigreader and Kmax succeed, comparable models are generated (kconfigreader usually generates more features and is faster, Kmax is slower but introduces less new variables/clauses in the DIMACS file).
+For freetz-ng, kconfigreader fails to create a DIMACS file using 8GiB of RAM (Kmax succeeds).
 
 ## Getting Started
 
