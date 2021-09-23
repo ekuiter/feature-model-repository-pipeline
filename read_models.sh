@@ -4,7 +4,8 @@ if [ $# -ne 1 ]; then
     exit 1
 fi
 READER=$1
-LOG=/vagrant/data/log_$READER.txt
+LOG=/vagrant/data/read_$READER.txt
+MODELS=/vagrant/data/read_$READER.csv
 if [ $READER = kconfigreader ]; then
     BINDING=dumpconf
     TAGS="kconfigreader|rsf|features|model|dimacs|cnf|tseytin"
@@ -20,6 +21,7 @@ BINDING_ENUMS=(S_UNKNOWN S_BOOLEAN S_TRISTATE S_INT S_HEX S_STRING S_OTHER P_UNK
 cd
 mkdir -p /vagrant/data
 echo -n > $LOG
+echo -n > $MODELS
 
 # compiles the C program that extracts Kconfig constraints from Kconfig files
 # for kconfigreader and kmax, this compiles dumpconf and kextractor against the Kconfig parser, respectively
@@ -37,17 +39,12 @@ c-binding() (
             args="$args -DENUM_$enum"
         fi
     done
-    if ! echo $4 | grep -q c-bindings; then
-        # make sure all dependencies for the C program are compiled
-        # make config sometimes asks for integers (not easily simulated with "yes"), which is why we add a timeout
-        make $binding_files >/dev/null || (yes | make allyesconfig >/dev/null) || (yes | make xconfig >/dev/null) || (yes "" | timeout 20s make config >/dev/null) || true
-        strip -N main $binding_dir/*.o || true
-        cmd="gcc /vagrant/$1.c $binding_files -I $binding_dir -Wall -Werror=switch $args -Wno-format -o /vagrant/data/c-bindings/$2/$3.$1"
-        (echo $cmd >> $LOG) && eval $cmd
-        echo /vagrant/data/c-bindings/$2/$3.$1
-    else
-        echo $4
-    fi
+    # make sure all dependencies for the C program are compiled
+    # make config sometimes asks for integers (not easily simulated with "yes"), which is why we add a timeout
+    make $binding_files >/dev/null || (yes | make allyesconfig >/dev/null) || (yes | make xconfig >/dev/null) || (yes "" | timeout 20s make config >/dev/null) || true
+    strip -N main $binding_dir/*.o || true
+    cmd="gcc /vagrant/$1.c $binding_files -I $binding_dir -Wall -Werror=switch $args -Wno-format -o /vagrant/data/c-bindings/$2/$3.$1"
+    (echo $cmd >> $LOG) && eval $cmd
 )
 
 read-model() (
@@ -60,9 +57,14 @@ read-model() (
     else
         env="$(echo '' -e $7 | sed 's/,/ -e /g')"
     fi
+    # the following hacks may not lead to accurate results
     if [ $2 = freetz-ng ]; then
         touch make/Config.in.generated make/external.in.generated config/custom.in # ugly hack because freetz-ng is weird
         writeDimacs="" # Tseytin transformation crashes for freetz-ng
+    fi
+    if [ $2 = toybox ]; then
+        mkdir -p generated
+        touch generated/Config.in generated/Config.probed
     fi
     if [ $2 = linux ]; then
         # ignore all constraints that use the newer $(success,...) syntax
@@ -83,7 +85,6 @@ read-model() (
         cmd="python3 /vagrant/kclause2dimacs.py /vagrant/data/models/$2/$3.$1.model > /vagrant/data/models/$2/$3.$1.dimacs"
         (echo $cmd | tee -a $LOG) && eval $cmd
     fi
-    echo $2,$3,$4,$5,$6 >> /vagrant/data/models.txt
 )
 
 git-checkout() (
@@ -107,6 +108,11 @@ svn-checkout() (
 run() (
     set -e
     echo | tee -a $LOG
+    if ! echo $4 | grep -q c-bindings; then
+        binding_path=/vagrant/data/c-bindings/$1/$3.$BINDING
+    else
+        binding_path=$4
+    fi
     if [[ ! -f "/vagrant/data/models/$1/$3.$READER.model" ]]; then
         trap 'ec=$?; (( ec != 0 )) && (rm -f /vagrant/data/models/'$1'/'$3'.'$READER'* && echo FAIL | tee -a $LOG) || (echo SUCCESS | tee -a $LOG)' EXIT
         echo "Checking out $3 in $1" | tee -a $LOG
@@ -117,14 +123,17 @@ run() (
         fi
         eval $vcs $1 $2 $3
         cd $1
-        echo "Compiling C binding $BINDING for $1 at $3" | tee -a $LOG
-        binding_path=$(c-binding $BINDING $1 $3 $4)
+        if [ ! $binding_path = $4 ]; then
+            echo "Compiling C binding $BINDING for $1 at $3" | tee -a $LOG
+            c-binding $BINDING $1 $3 $4
+        fi
         echo "Reading feature model for $1 at $3" | tee -a $LOG
         read-model $READER $1 $3 $binding_path $5 $6 $7
         cd
     else
         echo "Skipping feature model for $1 at $3" | tee -a $LOG
     fi
+    echo $1,$3,$binding_path,$5,$6 >> $MODELS
 )
 
 # More information on the systems below can be found in Berger et al.'s "Variability Modeling in the Systems Software Domain".
@@ -132,6 +141,12 @@ run() (
 # We usually compile dumpconf against the project source to get the most accurate translation.
 # Sometimes this is not possible, then we use dumpconf compiled for a Linux version with a similar Kconfig dialect (in most projects, the Kconfig parser is cloned&owned from Linux).
 # You can also read feature models for any other tags/commits (e.g., for every commit that changes a Kconfig file), although usually very old versions won't work (because Kconfig might have only been introduced later) and very recent versions might also not work (because they use new/esoteric Kconfig features not supported by kconfigreader or dumpconf).
+
+# Not supported right now:
+# https://github.com/coreboot/coreboot uses a modified Kconfig with wildcards for the source directive
+# https://github.com/Freetz/freetz uses Kconfig, but cannot be parsed with dumpconf, so we use freetz-ng instead (which is newer anyway)
+# https://github.com/rhuitl/uClinux is not so easy to set up, because it depends on vendor files
+# https://github.com/zephyrproject-rtos/zephyr also uses Kconfig, but a modified dialect based on Kconfiglib, which is not compatible with kconfigreader
 
 # Linux
 git-checkout linux https://github.com/torvalds/linux
@@ -151,7 +166,6 @@ for tag in $(cd axtls; svn ls ^/tags); do
 done
 
 # Buildroot
-run linux https://github.com/torvalds/linux v4.17 scripts/kconfig/*.o arch/x86/Kconfig $TAGS $linux_env
 git-checkout buildroot https://github.com/buildroot/buildroot
 for tag in $(git -C buildroot tag | grep -v rc | grep -v -e '\..*\.'); do
     run buildroot https://github.com/buildroot/buildroot $tag /vagrant/data/c-bindings/linux/v4.17.$BINDING Config.in $TAGS
@@ -163,38 +177,26 @@ for tag in $(git -C busybox tag | grep -v pre | grep -v alpha | grep -v rc); do
     run busybox https://github.com/mirror/busybox $tag scripts/kconfig/*.o Config.in $TAGS
 done
 
-# https://github.com/coreboot/coreboot uses a modified Kconfig with wildcards for the source directive
-
 # EmbToolkit
 git-checkout embtoolkit https://github.com/ndmsystems/embtoolkit
 for tag in $(git -C embtoolkit tag | grep -v rc | grep -v -e '-.*-'); do
     run embtoolkit https://github.com/ndmsystems/embtoolkit $tag scripts/kconfig/*.o Kconfig $TAGS
 done
 
-# # Fiasco
-# run linux https://github.com/torvalds/linux v5.0 scripts/kconfig/*.o arch/x86/Kconfig $TAGS $linux_env
-# run fiasco https://github.com/kernkonzept/fiasco d393c79a5f67bb5466fa69b061ede0f81b6398db /vagrant/data/c-bindings/linux/v5.0.$BINDING src/Kconfig $TAGS
+# Fiasco
+run fiasco https://github.com/kernkonzept/fiasco d393c79a5f67bb5466fa69b061ede0f81b6398db /vagrant/data/c-bindings/linux/v5.0.$BINDING src/Kconfig $TAGS
 
-# # https://github.com/Freetz/freetz uses Kconfig, but cannot be parsed with dumpconf, so we use freetz-ng instead (which is newer anyway)
+# Freetz-NG
+run freetz-ng https://github.com/Freetz-NG/freetz-ng 88b972a6283bfd65ae1bbf559e53caf7bb661ae3 /vagrant/data/c-bindings/linux/v5.0.$BINDING config/Config.in "kconfigreader|rsf|features|model"
 
-# # Freetz-NG
-# run linux https://github.com/torvalds/linux v5.0 scripts/kconfig/*.o arch/x86/Kconfig $TAGS $linux_env
-# run freetz-ng https://github.com/Freetz-NG/freetz-ng 88b972a6283bfd65ae1bbf559e53caf7bb661ae3 /vagrant/data/c-bindings/linux/v5.0.$BINDING config/Config.in "rsf|features|model|kconfigreader"
+# Toybox
+git-checkout toybox https://github.com/landley/toybox
+for tag in $(git -C toybox tag); do
+    run toybox https://github.com/landley/toybox $tag /vagrant/data/c-bindings/linux/v2.6.12.$BINDING Config.in $TAGS
+done
 
-# # Toybox
-# as a workaround, use dumpconf from Linux, because it cannot be built in this repository
-# run linux https://github.com/torvalds/linux v2.6.12 scripts/kconfig/*.o arch/i386/Kconfig $TAGS $linux_env
-# git-checkout toybox https://github.com/landley/toybox
-# for tag in $(git -C toybox tag); do
-#     run toybox https://github.com/landley/toybox $tag /vagrant/data/c-bindings/linux/v2.6.12.$BINDING Config.in $TAGS
-# done
-
-# # uClibc-ng
-# git-checkout uclibc-ng https://github.com/wbx-github/uclibc-ng
-# for tag in $(git -C uclibc-ng tag); do
-#     run uclibc-ng https://github.com/wbx-github/uclibc-ng $tag extra/config/zconf.tab.o extra/Configs/Config.in $TAGS
-# done
-
-# # https://github.com/rhuitl/uClinux is not so easy to set up, because it depends on vendor files
-
-# # https://github.com/zephyrproject-rtos/zephyr also uses Kconfig, but a modified dialect based on Kconfiglib, which is not compatible with kconfigreader
+# uClibc-ng
+git-checkout uclibc-ng https://github.com/wbx-github/uclibc-ng
+for tag in $(git -C uclibc-ng tag); do
+    run uclibc-ng https://github.com/wbx-github/uclibc-ng $tag extra/config/zconf.tab.o extra/Configs/Config.in $TAGS
+done

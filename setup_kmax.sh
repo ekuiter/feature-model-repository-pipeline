@@ -1,5 +1,7 @@
 #!/bin/bash
 set -e
+chmod +x /vagrant/*.sh
+chmod +x /vagrant/MiniSat_v1.14_linux
 sudo apt-get update
 sudo apt-get install git subversion python3-setuptools python3-dev flex bison bc libssl-dev libelf-dev -y --force-yes
 cd
