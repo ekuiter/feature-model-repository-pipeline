@@ -39,7 +39,7 @@ The results are stored into the `data/models/` directory in several formats:
 *.kmax.dimacs             Text file with Boolean constraints in Tseytin-transformed CNF (created with z3)
  ```
 
-The resulting models are comparable to those found at https://github.com/PettTo/Feature-Model-History-of-Linux and https://bitbucket.org/tberger/variability-models/src/master/kconfig/, only that we have a different selection of projects and commits.
+The resulting models are comparable to those found [here](https://github.com/PettTo/Feature-Model-History-of-Linux), [here](https://bitbucket.org/tberger/variability-models/src/master/kconfig/), or [here](https://github.com/AlexanderKnueppel/is-there-a-mismatch/tree/master/Data/LargeFeatureModels/KConfig), only that we have a different selection of projects and commits.
 We also made some changes to dumpconf (the tool used to produce the input RSF file for kconfigreader) and kextractor (a similar tool used by Kmax), to allow for reading feature models for other projects and versions.
 Specifically, we added support for E_CHOICE (treated as E_LIST), P_IMPLY (treated as P_SELECT), E_NONE, E_LTH, E_LEQ, E_GTH, E_GEQ (ignored).
 We also fixed some other bugs to allow reading feature models for other projects as well.
