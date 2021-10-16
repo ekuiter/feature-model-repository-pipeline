@@ -17,7 +17,7 @@ For freetz-ng, kconfigreader fails to create a DIMACS file using 8GiB of RAM (Km
 First, clone this repository:
 
 ```
-git clone https://github.com/ekuiter/feature-model-repository.git
+git clone https://github.com/ekuiter/feature-model-repository-pipeline.git
 ```
 
 Install [Vagrant](https://www.vagrantup.com/) and [VirtualBox](https://www.virtualbox.org/), then run `vagrant up` inside this repository to set up both kconfigreader and Kmax.
