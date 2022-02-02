@@ -20,7 +20,7 @@ First, clone this repository:
 git clone https://github.com/ekuiter/feature-model-repository-pipeline.git
 ```
 
-Install [Vagrant](https://www.vagrantup.com/) and [VirtualBox](https://www.virtualbox.org/), then run `vagrant up` inside this repository to set up both kconfigreader and Kmax.
+Install [Vagrant](https://www.vagrantup.com/), [VirtualBox](https://www.virtualbox.org/) and `vagrant plugin install vagrant-vbguest`, then run `vagrant up` inside this repository to set up both kconfigreader and Kmax.
 After `vagrant up`, use `vagrant ssh <reader>` to log on to the VM (`<reader>` being `kconfigreader` or `kmax`).
 In case that `vagrant up` fails with `error retrieving required libraries` for Scala, this can be fixed by re-running the setup script with `vagrant ssh kconfigreader` and `source /vagrant/setup_kconfigreader.sh`.
 In case that this fails due to line endings (which can happen with Git on Windows), fix the line endings and re-run the setup script with `vagrant ssh kconfigreader` and `sudo apt-get update && sudo apt-get install dos2unix && find /vagrant -type f -exec dos2unix {} \; && /vagrant/setup_kconfigreader.sh`.

@@ -63,6 +63,9 @@ read-model() (
         touch make/Config.in.generated make/external.in.generated config/custom.in # ugly hack because freetz-ng is weird
         writeDimacs="" # Tseytin transformation crashes for freetz-ng
     fi
+    if [ $2 = buildroot ]; then
+        touch .br2-external.in .br2-external.in.paths .br2-external.in.toolchains .br2-external.in.openssl .br2-external.in.jpeg .br2-external.in.menus .br2-external.in.skeleton .br2-external.in.init
+    fi
     if [ $2 = toybox ]; then
         mkdir -p generated
         touch generated/Config.in generated/Config.probed
@@ -74,7 +77,7 @@ read-model() (
         find ./ -type f -name "*Kconfig*" -exec sed -i 's/\s*def_bool $(.*//g' {} \;
     fi
     if [ $1 = kconfigreader ]; then
-        cmd="~/kconfigreader/run.sh de.fosd.typechef.kconfig.KConfigReader --fast --dumpconf $4 $writeDimacs $5 /vagrant/data/models/$2/$3.$1"
+        cmd="~/kconfigreader/run.sh de.fosd.typechef.kconfig.KConfigReader --fast --dumpconf $4 $writeDimacs $5 /vagrant/data/models/$2/$3.$1 | ~/eval_writedimacs | tee >(grep eval_writedimacs >> /vagrant/data/models/$2/$3.$1.dimacs)"
         (echo $cmd | tee -a $LOG) && eval $cmd
     elif [ $1 = kmax ]; then
         cmd="$4 --extract -o /vagrant/data/models/$2/$3.$1.kclause $env $5"
@@ -167,8 +170,11 @@ for tag in $(cd axtls; svn ls ^/tags); do
 done
 
 # Buildroot
+export BR2_EXTERNAL=support/dummy-external
+export BUILD_DIR=/home/vagrant/buildroot
+export BASE_DIR=/home/vagrant/buildroot
 git-checkout buildroot https://github.com/buildroot/buildroot
-for tag in $(git -C buildroot tag | grep -v rc | grep -v -e '\..*\.'); do
+for tag in $(git -C buildroot tag | grep -v rc | grep -v _ | grep -v -e '\..*\.'); do
     run buildroot https://github.com/buildroot/buildroot $tag /vagrant/data/c-bindings/linux/v4.17.$BINDING Config.in $TAGS
 done
 

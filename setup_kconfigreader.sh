@@ -11,3 +11,5 @@ git clone https://github.com/ckaestne/kconfigreader.git || true
 cd kconfigreader
 git checkout 913bf3178af5a8ac8bedc5e8733561ed38280cf9 # tested version of Kconfigreader
 sbt mkrun
+cd
+gcc -o eval_writedimacs /vagrant/eval_writedimacs.c
