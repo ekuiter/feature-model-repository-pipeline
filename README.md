@@ -1,6 +1,6 @@
 # Feature Model Repository Pipeline
 
-**For a newer version based on Docker, see https://github.com/ekuiter/comparing-cnf-transformations.**
+**For a newer version based on Docker, see [here](https://github.com/ekuiter/comparing-cnf-transformations).**
 
 This repository implements a reproducible pipeline for reading feature models from several open-source projects based on the Kconfig language for variability modeling.
 The feature models are created with [kconfigreader](https://github.com/ckaestne/kconfigreader) (a tool for reading Kconfig files and converting them into feature model formulas for further reasoning) and [Kmax/Kclause](https://github.com/paulgazz/kmax) (a collection of analysis tools for Kconfig and Kbuild constraints).
