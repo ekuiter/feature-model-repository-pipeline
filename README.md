@@ -5,7 +5,7 @@ The feature models are created with [kconfigreader](https://github.com/ckaestne/
 For improved reproducibility, both tools are set up and run in virtual machines using Vagrant (kconfigreader in Ubuntu 14.04 because of incompabilities between Java and Scala in newer versions).
 Besides creating a public repository with large feature models, the idea of this project is also that you can change the scripts according to your own needs (e.g., projects/versions/commits) and automate most of the steps needed to set up and run kconfigreader and Kmax.
 
-**You can freely access all resulting feature models here: https://git.iti.cs.ovgu.de/kuiter/feature-model-repository**
+**You can freely access all resulting feature models here: https://github.com/ekuiter/feature-model-repository**
 
 The models read for Linux >=4.19 and Toybox are currently not accurate and should not be used.
 All other models were superficially checked for plausability and satisfiability.
