@@ -1,5 +1,7 @@
 # Feature Model Repository Pipeline
 
+**For a newer version based on Docker, see [ekuiter/tseitin-or-not-tseitin](https://github.com/ekuiter/tseitin-or-not-tseitin).**
+
 This repository implements a reproducible pipeline for reading feature models from several open-source projects based on the Kconfig language for variability modeling.
 The feature models are created with [kconfigreader](https://github.com/ckaestne/kconfigreader) (a tool for reading Kconfig files and converting them into feature model formulas for further reasoning) and [Kmax/Kclause](https://github.com/paulgazz/kmax) (a collection of analysis tools for Kconfig and Kbuild constraints).
 For improved reproducibility, both tools are set up and run in virtual machines using Vagrant (kconfigreader in Ubuntu 14.04 because of incompabilities between Java and Scala in newer versions).
