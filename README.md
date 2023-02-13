@@ -1,5 +1,7 @@
 # Feature Model Repository Pipeline
 
+**Kmax-generated files are corrupt due to a wrong usage of the Z3 API.**
+
 **For a newer version based on Docker, see [ekuiter/tseitin-or-not-tseitin](https://github.com/ekuiter/tseitin-or-not-tseitin).**
 
 This repository implements a reproducible pipeline for reading feature models from several open-source projects based on the Kconfig language for variability modeling.
