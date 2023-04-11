@@ -1,15 +1,13 @@
 # Feature Model Repository Pipeline
 
-**Kmax-generated files are corrupt due to a wrong usage of the Z3 API.**
-
-**For a newer version based on Docker, see [ekuiter/tseitin-or-not-tseitin](https://github.com/ekuiter/tseitin-or-not-tseitin).**
+**Kmax-generated files are corrupt due to a wrong usage of the Z3 API. This repository is only for archiving purposes. Consider using our fixed and improved tool over at [tseitin-or-not-tseitin](https://github.com/ekuiter/tseitin-or-not-tseitin) or our curated [feature-model benchmark](https://github.com/SoftVarE-Group/feature-model-benchmark).**
 
 This repository implements a reproducible pipeline for reading feature models from several open-source projects based on the Kconfig language for variability modeling.
 The feature models are created with [kconfigreader](https://github.com/ckaestne/kconfigreader) (a tool for reading Kconfig files and converting them into feature model formulas for further reasoning) and [Kmax/Kclause](https://github.com/paulgazz/kmax) (a collection of analysis tools for Kconfig and Kbuild constraints).
 For improved reproducibility, both tools are set up and run in virtual machines using Vagrant (kconfigreader in Ubuntu 14.04 because of incompabilities between Java and Scala in newer versions).
 Besides creating a public repository with large feature models, the idea of this project is also that you can change the scripts according to your own needs (e.g., projects/versions/commits) and automate most of the steps needed to set up and run kconfigreader and Kmax.
 
-**You can freely access all resulting feature models here: https://github.com/ekuiter/feature-model-repository**
+You can freely access all resulting feature models here: https://github.com/ekuiter/feature-model-repository
 
 The models read for Linux >=4.19 and Toybox are currently not accurate and should not be used.
 All other models were superficially checked for plausability and satisfiability.
